@@ -682,7 +682,7 @@
 
     <!-- ផ្នែកខាងក្រោម (Footer) -->
     <footer class="border-t border-slate-800/60 py-4 text-center text-xs text-slate-500">
-        ដំណើរការដោយផ្ទាល់លើទូរស័ព្ទ និងកុំព្យូទ័ររបស់អ្នក • មិនត្រូវការ API Key
+        ដំណើរការដោយផ្ទាល់លើទូរស័ព្ទ និងកុំព្យូទ័ររបស់អ្នក • មិនត្រូវការ API Key • <span class="text-sky-400 font-semibold">v2.2</span>
     </footer>
 
     <script>
@@ -1267,6 +1267,52 @@
             let pendingInterim = '';
             let micReadyInRun = false;      // មីក្រូហ្វូនបានបើកពិតប្រាកដក្នុងវគ្គនេះ (ទើបអនុញ្ញាតឲ្យបើកឡើងវិញស្វ័យប្រវត្តិ)
             let isStartingVoice = false;    // ការពារការចុចពីរដងពេលកំពុងសុំសិទ្ធិ
+            let sessionAudioStarted = false; // Mic បានចាប់សំឡេងក្នុងវគ្គស្តាប់បច្ចុប្បន្ន
+            let sessionStartCalledAt = 0;
+            let sessionIsRestart = false;
+            let autoRestartAllowed = true;   // បិទការបើកឡើងវិញស្វ័យប្រវត្តិ បើ Chrome ចេះតែសួរសិទ្ធិ
+            const REPROMPT_DELAY_MS = 2000;
+
+            function markAudioStarted() {
+                if (sessionAudioStarted) return;
+                sessionAudioStarted = true;
+                micReadyInRun = true;
+                // ពេលបើកឡើងវិញ បើ Mic យឺតជាង ២ វិនាទី មានន័យថា Chrome បានលោតសួរសិទ្ធិម្តងទៀត
+                if (sessionIsRestart && Date.now() - sessionStartCalledAt > REPROMPT_DELAY_MS) {
+                    autoRestartAllowed = false;
+                }
+            }
+
+            // ពិនិត្យថា Chrome បានរក្សាសិទ្ធិ Mic ទុកជាប់ ឬអត់
+            async function isMicPermissionPersisted() {
+                if (isIOS) return true;
+                try {
+                    if (navigator.permissions && navigator.permissions.query) {
+                        const status = await navigator.permissions.query({ name: 'microphone' });
+                        return status.state === 'granted';
+                    }
+                } catch (e) {}
+                return true;
+            }
+
+            function showPersistentVoiceTip(html) {
+                if (!voiceHint) return;
+                if (!voiceHint.querySelector('[data-tip="perm"]')) {
+                    const tip = document.createElement('p');
+                    tip.dataset.tip = 'perm';
+                    tip.innerHTML = html;
+                    voiceHint.prepend(tip);
+                }
+                voiceHint.classList.remove('hidden');
+            }
+
+            function stopWithPermissionTip() {
+                manualVoiceStop = true;
+                clearTimeout(restartTimer);
+                setVoiceRecordingUI(false);
+                showPersistentVoiceTip('🔁 Chrome មិនរក្សាសិទ្ធិ Mic ទុកទេ ទើបវាសួររាល់ឃ្លា។ ដើម្បីកុំឲ្យសួរទៀត៖ ចុចរូប ⚙ ឬ 🔒 ខាងឆ្វេងតំណ › <b>Permissions › Microphone › Allow</b> រួច Reload ទំព័រ។');
+                showToast('បានឈប់ស្តាប់ ដើម្បីកុំឲ្យលោតសួរសិទ្ធិរហូត — ចុច Mic ម្តងទៀតដើម្បីនិយាយបន្ត។', 'warning');
+            }
 
             function getNotAllowedMessage() {
                 if (isLocalFileOpen) return 'Mic ត្រូវបានបិទ ព្រោះឯកសារនេះបើកពីក្នុងទូរស័ព្ទផ្ទាល់។ សូមបើកតាមតំណ https:// (ឧ. GitHub Pages) ទើប Mic ដំណើរការ។';
@@ -1412,12 +1458,12 @@
                     }
                 };
 
-                rec.onaudiostart = () => { micReadyInRun = true; };
-                rec.onspeechstart = () => { micReadyInRun = true; };
+                rec.onaudiostart = () => { markAudioStarted(); };
+                rec.onspeechstart = () => { markAudioStarted(); };
 
                 rec.onresult = (event) => {
                     sessionGotResult = true;
-                    micReadyInRun = true;
+                    markAudioStarted();
                     let interim = '';
 
                     for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -1478,11 +1524,17 @@
                     }
 
                     // Mic មិនទាន់បើកបានពិតប្រាកដ (ឧ. កំពុងរង់ចាំចុច Allow) — កុំបើកឡើងវិញ ដើម្បីកុំឲ្យលោតសួររហូត
-                    if (!micReadyInRun) {
+                    if (!sessionAudioStarted) {
                         manualVoiceStop = true;
                         clearTimeout(restartTimer);
                         setVoiceRecordingUI(false);
                         showToast('Mic មិនទាន់បើកបានទេ — ពេលវាសួរ សូមចុច «Allow» ឬ «While visiting the site» (កុំចុច «Only this time») រួចចុចប៊ូតុង Mic ម្តងទៀត។', 'warning');
+                        return;
+                    }
+
+                    // Chrome បានលោតសួរសិទ្ធិម្តងទៀតពេលបើកឡើងវិញ — ឈប់ ហើយប្រាប់វិធីកំណត់ឲ្យជាប់
+                    if (!autoRestartAllowed) {
+                        stopWithPermissionTip();
                         return;
                     }
 
@@ -1497,8 +1549,17 @@
 
                     if (voiceInterimText) voiceInterimText.textContent = 'កំពុងស្តាប់... សូមនិយាយបន្ត';
                     clearTimeout(restartTimer);
-                    restartTimer = setTimeout(() => {
+                    restartTimer = setTimeout(async () => {
                         if (manualVoiceStop || !isVoiceRecording) return;
+                        // បើ Chrome មិនរក្សាសិទ្ធិទុកជាប់ ការបើកឡើងវិញនឹងលោតសួរម្តងទៀត — ឈប់សិន
+                        if (!(await isMicPermissionPersisted())) {
+                            stopWithPermissionTip();
+                            return;
+                        }
+                        if (manualVoiceStop || !isVoiceRecording) return;
+                        sessionAudioStarted = false;
+                        sessionIsRestart = true;
+                        sessionStartCalledAt = Date.now();
                         try {
                             rec.start();
                         } catch (e) {
@@ -1570,6 +1631,10 @@
                 hasAnnouncedVoiceStart = false;
                 rapidEndCount = 0;
                 micReadyInRun = false;
+                autoRestartAllowed = true;
+                sessionAudioStarted = false;
+                sessionIsRestart = false;
+                sessionStartCalledAt = Date.now();
                 speechRecognition = buildRecognizer();
                 setVoiceRecordingUI(true);
 
