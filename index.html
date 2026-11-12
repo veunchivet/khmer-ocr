@@ -1265,6 +1265,41 @@
             let sessionLastFinal = '';
             let sessionFinalIndexes = new Set();
             let pendingInterim = '';
+            let micReadyInRun = false;      // មីក្រូហ្វូនបានបើកពិតប្រាកដក្នុងវគ្គនេះ (ទើបអនុញ្ញាតឲ្យបើកឡើងវិញស្វ័យប្រវត្តិ)
+            let isStartingVoice = false;    // ការពារការចុចពីរដងពេលកំពុងសុំសិទ្ធិ
+
+            function getNotAllowedMessage() {
+                if (isLocalFileOpen) return 'Mic ត្រូវបានបិទ ព្រោះឯកសារនេះបើកពីក្នុងទូរស័ព្ទផ្ទាល់។ សូមបើកតាមតំណ https:// (ឧ. GitHub Pages) ទើប Mic ដំណើរការ។';
+                if (isInAppBrowser) return 'Browser ក្នុង Facebook / Messenger / TikTok មិនអនុញ្ញាត Mic ទេ — សូមចុច ⋮ › «Open in Chrome» ឬ «Open in Safari»។';
+                if (isIOS) return 'សូមអនុញ្ញាត Mic៖ ចុច «aA» លើរបារតំណ › Website Settings › Microphone › Allow រួច Reload ទំព័រ។';
+                return 'សូមអនុញ្ញាត Mic៖ ចុចរូប 🔒 ឬ ⚙ ខាងឆ្វេងតំណ › Permissions › Microphone › Allow រួច Reload ទំព័រ។';
+            }
+
+            // សុំសិទ្ធិ Mic តែម្តងគត់ មុនពេលចាប់ផ្តើមស្តាប់ — ដើម្បីកុំឲ្យ Browser សួររាល់ឃ្លាថ្មី
+            async function ensureMicPermission() {
+                try {
+                    if (navigator.permissions && navigator.permissions.query) {
+                        const status = await navigator.permissions.query({ name: 'microphone' });
+                        if (status.state === 'granted') return 'granted';
+                        if (status.state === 'denied') return 'denied';
+                    }
+                } catch (e) {}
+
+                // iPhone៖ ទុកឲ្យ Safari សួរសិទ្ធិខ្លួនឯង (កុំឲ្យសួរពីរដង)
+                if (isIOS || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return 'unknown';
+
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    stream.getTracks().forEach(track => track.stop());
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    return 'granted';
+                } catch (err) {
+                    const name = err && err.name;
+                    if (name === 'NotAllowedError' || name === 'SecurityError') return 'denied';
+                    if (name === 'NotFoundError' || name === 'NotReadableError') return 'no-mic';
+                    return 'unknown';
+                }
+            }
             const voiceUndoStack = [];
 
             function vibrateShort(ms = 25) {
@@ -1377,8 +1412,12 @@
                     }
                 };
 
+                rec.onaudiostart = () => { micReadyInRun = true; };
+                rec.onspeechstart = () => { micReadyInRun = true; };
+
                 rec.onresult = (event) => {
                     sessionGotResult = true;
+                    micReadyInRun = true;
                     let interim = '';
 
                     for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -1415,16 +1454,8 @@
                     clearTimeout(restartTimer);
                     setVoiceRecordingUI(false);
 
-                    const notAllowedMessage = isLocalFileOpen
-                        ? 'Mic ត្រូវបានបិទ ព្រោះឯកសារនេះបើកពីក្នុងទូរស័ព្ទផ្ទាល់។ សូមបើកតាមតំណ https:// (ឧ. GitHub Pages) ទើប Mic ដំណើរការ។'
-                        : isInAppBrowser
-                            ? 'Browser ក្នុង Facebook / Messenger / TikTok មិនអនុញ្ញាត Mic ទេ — សូមចុច ⋮ › «Open in Chrome» ឬ «Open in Safari»។'
-                            : isIOS
-                                ? 'សូមអនុញ្ញាត Mic៖ ចុច «aA» លើរបារតំណ › Website Settings › Microphone › Allow រួច Reload ទំព័រ។'
-                                : 'សូមអនុញ្ញាត Mic៖ ចុចរូប 🔒 ឬ ⚙ ខាងឆ្វេងតំណ › Permissions › Microphone › Allow រួច Reload ទំព័រ។';
-
                     const errorMessages = {
-                        'not-allowed': notAllowedMessage,
+                        'not-allowed': getNotAllowedMessage(),
                         'service-not-allowed': isIOS
                             ? 'iPhone៖ សូមបើក Dictation (ការនិយាយសរសេរ) ក្នុង Settings › General › Keyboard រួចសាកម្តងទៀត។'
                             : 'Browser នេះមិនអនុញ្ញាតសេវាស្តាប់សំឡេងទេ សូមបើកក្នុង Google Chrome។',
@@ -1443,6 +1474,15 @@
 
                     if (manualVoiceStop || !isVoiceRecording) {
                         setVoiceRecordingUI(false);
+                        return;
+                    }
+
+                    // Mic មិនទាន់បើកបានពិតប្រាកដ (ឧ. កំពុងរង់ចាំចុច Allow) — កុំបើកឡើងវិញ ដើម្បីកុំឲ្យលោតសួររហូត
+                    if (!micReadyInRun) {
+                        manualVoiceStop = true;
+                        clearTimeout(restartTimer);
+                        setVoiceRecordingUI(false);
+                        showToast('Mic មិនទាន់បើកបានទេ — ពេលវាសួរ សូមចុច «Allow» ឬ «While visiting the site» (កុំចុច «Only this time») រួចចុចប៊ូតុង Mic ម្តងទៀត។', 'warning');
                         return;
                     }
 
@@ -1485,7 +1525,8 @@
                 vibrateShort(20);
             }
 
-            function startVoiceRecognition() {
+            async function startVoiceRecognition() {
+                if (isStartingVoice) return;
                 if (!SpeechRecognitionAPI) {
                     updateVoiceHint();
                     showToast('Browser នេះមិនគាំទ្រការស្តាប់សំឡេងទេ! សូមបើកក្នុង Google Chrome (Android) ឬ Safari (iPhone)។', 'warning');
@@ -1497,6 +1538,24 @@
                     return;
                 }
 
+                // ជំហានទី ១៖ សុំសិទ្ធិ Mic តែម្តង (ពេលវាសួរ សូមចុច «While visiting the site»)
+                isStartingVoice = true;
+                if (voiceMicLabel) voiceMicLabel.textContent = 'កំពុងសុំសិទ្ធិ Mic...';
+                const permission = await ensureMicPermission();
+                isStartingVoice = false;
+
+                if (permission === 'denied') {
+                    setVoiceRecordingUI(false);
+                    showToast(getNotAllowedMessage(), 'warning');
+                    return;
+                }
+                if (permission === 'no-mic') {
+                    setVoiceRecordingUI(false);
+                    showToast('រកមិនឃើញមីក្រូហ្វូន ឬកម្មវិធីផ្សេងកំពុងប្រើវា (ឧ. ការហៅទូរស័ព្ទ)។', 'warning');
+                    return;
+                }
+
+                // ជំហានទី ២៖ ចាប់ផ្តើមស្តាប់សំឡេង
                 clearTimeout(restartTimer);
                 if (speechRecognition) {
                     try {
@@ -1510,6 +1569,7 @@
                 manualVoiceStop = false;
                 hasAnnouncedVoiceStart = false;
                 rapidEndCount = 0;
+                micReadyInRun = false;
                 speechRecognition = buildRecognizer();
                 setVoiceRecordingUI(true);
 
