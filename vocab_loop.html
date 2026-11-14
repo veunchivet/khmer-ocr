@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0b0d12">
+<title>Vocab Loop — រៀនពាក្យ + សំឡេង</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;600;700&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0d12; --bg2:#10131a; --card:#151a24; --card2:#1b2130; --line:rgba(255,255,255,.07);
+  --txt:#e9edf5; --mut:#8b93a7; --acc1:#8b6cff; --acc2:#22d3ee; --gold:#f5c96a; --red:#ff5d73; --green:#34d399;
+  --grad:linear-gradient(135deg,var(--acc1),var(--acc2));
+  --r:16px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:'Noto Sans Khmer','Noto Sans KR',system-ui,sans-serif;font-size:15px}
+body{min-height:100vh;padding-bottom:calc(78px + env(safe-area-inset-bottom));
+  background:radial-gradient(900px 500px at 10% -10%,rgba(139,108,255,.18),transparent 60%),radial-gradient(700px 400px at 110% 10%,rgba(34,211,238,.10),transparent 60%),var(--bg);background-attachment:fixed}
+header{position:sticky;top:0;z-index:20;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:rgba(11,13,18,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.logo{width:38px;height:38px;border-radius:12px;background:var(--grad);display:grid;place-items:center;font-weight:700;font-size:18px;box-shadow:0 6px 20px rgba(139,108,255,.35)}
+header h1{font-size:16px;margin:0;line-height:1.2}
+header small{color:var(--mut);font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60vw}
+main{max-width:720px;margin:0 auto;padding:14px}
+.tab{display:none;animation:fade .25s ease}
+.tab.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.card{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.card h2{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.card h2 .dot{width:8px;height:8px;border-radius:50%;background:var(--grad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row>*{flex:1 1 auto}
+.btn{appearance:none;border:1px solid var(--line);background:var(--card2);color:var(--txt);padding:11px 14px;border-radius:12px;font:inherit;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;transition:transform .08s,background .2s}
+.btn:active{transform:scale(.97)}
+.btn.pri{background:var(--grad);border:0;color:#fff;box-shadow:0 6px 18px rgba(139,108,255,.3)}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--red)}
+.btn.sm{min-height:36px;padding:7px 10px;font-size:13px;border-radius:10px}
+.btn:disabled{opacity:.45;pointer-events:none}
+label.lbl{display:block;color:var(--mut);font-size:12.5px;margin:10px 0 6px}
+select,input[type=text],textarea{width:100%;background:var(--bg2);border:1px solid var(--line);color:var(--txt);border-radius:12px;padding:11px 12px;font:inherit;outline:none}
+select:focus,input:focus,textarea:focus{border-color:rgba(139,108,255,.6)}
+textarea{min-height:110px;resize:vertical}
+.hint{color:var(--mut);font-size:12.5px;line-height:1.6}
+/* previews */
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:10px}
+.thumbs .t{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);aspect-ratio:3/4;background:#000}
+.thumbs img{width:100%;height:100%;object-fit:cover}
+.thumbs .x{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.6);border:0;color:#fff;font-size:14px}
+.prog{height:8px;border-radius:8px;background:var(--bg2);overflow:hidden;margin-top:10px;border:1px solid var(--line)}
+.prog>i{display:block;height:100%;width:0;background:var(--grad);transition:width .2s}
+/* table */
+.tbl{width:100%;border-collapse:separate;border-spacing:0 6px}
+.tbl th{color:var(--mut);font-size:12px;font-weight:600;text-align:left;padding:0 6px}
+.tbl td{padding:0 3px;vertical-align:middle}
+.tbl td.n{color:var(--mut);font-size:12px;width:26px;text-align:center}
+.tbl input{padding:9px 10px;border-radius:10px;font-size:15px}
+.tbl input.a{font-family:'Noto Sans KR','Noto Sans Khmer',sans-serif}
+.ib{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--txt);font-size:14px;display:grid;place-items:center;cursor:pointer}
+.ib.del{color:var(--red)}
+.empty{color:var(--mut);text-align:center;padding:26px 10px;line-height:1.7}
+/* player */
+.stage{text-align:center;padding:26px 14px 20px;position:relative;overflow:hidden}
+.stage .count{color:var(--mut);font-size:13px;letter-spacing:.5px}
+.wordA{font-family:'Noto Sans KR','Noto Sans Khmer',sans-serif;font-size:clamp(34px,10vw,56px);font-weight:700;margin:14px 0 6px;line-height:1.25;word-break:break-word;transition:all .25s}
+.wordB{font-size:clamp(22px,6.5vw,34px);font-weight:600;color:#cfd6e6;line-height:1.5;word-break:break-word;transition:all .25s}
+.speaking{color:transparent!important;background:var(--grad);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 18px rgba(139,108,255,.45))}
+.bar{height:5px;border-radius:5px;background:var(--bg2);overflow:hidden;margin-top:18px}
+.bar>i{display:block;height:100%;width:0;background:var(--grad);transition:width .3s}
+.ctrls{display:flex;justify-content:center;align-items:center;gap:14px;margin-top:18px}
+.cbtn{width:54px;height:54px;border-radius:50%;border:1px solid var(--line);background:var(--card2);color:var(--txt);font-size:20px;display:grid;place-items:center;cursor:pointer}
+.cbtn.big{width:74px;height:74px;font-size:28px;background:var(--grad);border:0;color:#fff;box-shadow:0 10px 30px rgba(139,108,255,.45)}
+.cbtn:active{transform:scale(.95)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1 1 auto;border:1px solid var(--line);background:var(--bg2);color:var(--mut);border-radius:10px;padding:9px 8px;font:inherit;font-size:13px;cursor:pointer;min-height:40px}
+.seg button.on{background:rgba(139,108,255,.18);border-color:rgba(139,108,255,.6);color:#fff}
+.rng{display:flex;align-items:center;gap:10px}
+.rng input{flex:1;accent-color:var(--acc1)}
+.rng b{min-width:52px;text-align:right;font-size:13px;color:var(--gold)}
+.tg{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line)}
+.tg:first-of-type{border-top:0}
+.sw{position:relative;width:48px;height:28px;flex:0 0 48px}
+.sw input{opacity:0;width:0;height:0}
+.sw span{position:absolute;inset:0;border-radius:28px;background:var(--bg2);border:1px solid var(--line);transition:.2s}
+.sw span:after{content:"";position:absolute;width:22px;height:22px;top:2px;left:2px;border-radius:50%;background:#fff;transition:.2s}
+.sw input:checked+span{background:var(--grad);border-color:transparent}
+.sw input:checked+span:after{transform:translateX(20px)}
+.plist{max-height:320px;overflow:auto;margin-top:6px}
+.pi{display:flex;gap:10px;align-items:center;padding:9px 10px;border-radius:10px;cursor:pointer;border:1px solid transparent}
+.pi .k{color:var(--mut);font-size:12px;width:24px;text-align:center}
+.pi .a{font-family:'Noto Sans KR','Noto Sans Khmer',sans-serif;font-weight:700;flex:1 1 40%}
+.pi .b{color:#c3cada;flex:1 1 60%;text-align:right}
+.pi.cur{background:rgba(139,108,255,.14);border-color:rgba(139,108,255,.45)}
+/* library */
+.lesson{display:flex;gap:12px;align-items:center;padding:10px;border-radius:14px;background:var(--bg2);border:1px solid var(--line);margin-bottom:10px}
+.lesson .im{width:58px;height:58px;border-radius:12px;background:var(--card2);overflow:hidden;flex:0 0 58px;display:grid;place-items:center;font-size:24px}
+.lesson .im img{width:100%;height:100%;object-fit:cover}
+.lesson .info{flex:1;min-width:0}
+.lesson .info b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lesson .info small{color:var(--mut);font-size:12px}
+.lesson .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:130px}
+/* nav */
+nav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;justify-content:space-around;background:rgba(14,17,24,.92);backdrop-filter:blur(16px);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+nav button{flex:1;background:none;border:0;color:var(--mut);font:inherit;font-size:12px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border-radius:12px}
+nav button .ic{font-size:20px;line-height:1}
+nav button.on{color:#fff}
+nav button.on .ic{filter:drop-shadow(0 0 8px rgba(139,108,255,.8))}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#222a3a;border:1px solid var(--line);color:#fff;padding:11px 16px;border-radius:12px;font-size:13.5px;opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:90vw;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.toast.on{opacity:1;transform:translateX(-50%)}
+.pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11.5px;background:rgba(34,211,238,.12);color:var(--acc2);border:1px solid rgba(34,211,238,.3)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">가</div>
+  <div style="flex:1;min-width:0">
+    <h1>Vocab Loop</h1>
+    <small id="hdrSub">ថតរូប → តារាង → សំឡេង → ចាក់ Loop</small>
+  </div>
+  <span class="pill" id="hdrCount">0 ពាក្យ</span>
+</header>
+
+<main>
+<!-- ============ SCAN ============ -->
+<section class="tab on" id="tab-scan">
+  <div class="card">
+    <h2><span class="dot"></span>១. ដាក់រូបថតបញ្ជីពាក្យ</h2>
+    <div class="row">
+      <button class="btn pri" id="btnCam">📷 ថតរូប</button>
+      <button class="btn" id="btnGal">🖼 ជ្រើសពី Gallery</button>
+    </div>
+    <input type="file" id="fCam" accept="image/*" capture="environment" hidden>
+    <input type="file" id="fGal" accept="image/*" multiple hidden>
+    <div class="thumbs" id="thumbs"></div>
+
+    <label class="lbl">ភាសាជួរឈរទី ១ (ជួរទី ២ = ខ្មែរ)</label>
+    <select id="lang1"></select>
+
+    <label class="lbl">ប្លង់រូប</label>
+    <select id="psm">
+      <option value="6">ជួរដេក — ពាក្យ និងអត្ថន័យនៅបន្ទាត់តែមួយ (ឧ. 가다 = ទៅ)</option>
+      <option value="4">ជួរឈរ — បញ្ជីបញ្ឈរ</option>
+      <option value="3">ស្វ័យប្រវត្តិ</option>
+    </select>
+
+    <div class="row" style="margin-top:12px">
+      <button class="btn pri" id="btnScan" disabled>🔍 ស្កែនអក្សរ → តារាង</button>
+    </div>
+    <div class="prog" id="ocrProgWrap" hidden><i id="ocrProg"></i></div>
+    <div class="hint" id="ocrStatus" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="dot"></span>ឬ បិទភ្ជាប់អត្ថបទ</h2>
+    <textarea id="pasteTxt" placeholder="가다 = ទៅ&#10;오다 = មក&#10;먹다 = ញ៉ាំ"></textarea>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="btnPaste">➕ បញ្ចូលទៅតារាង</button>
+    </div>
+    <p class="hint">មួយបន្ទាត់ = មួយពាក្យ។ អាចប្រើ <b>=</b>, <b>:</b>, <b>-</b> ឬដកឃ្លា — App បំបែកអក្សរខ្មែរដាក់ជួរទី ២ ដោយស្វ័យប្រវត្តិ។</p>
+  </div>
+</section>
+
+<!-- ============ TABLE ============ -->
+<section class="tab" id="tab-table">
+  <div class="card">
+    <h2><span class="dot"></span>តារាងពាក្យ</h2>
+    <label class="lbl" style="margin-top:0">ឈ្មោះមេរៀន</label>
+    <input type="text" id="lessonName" placeholder="ឧ. មេរៀនទី ១ — កិរិយាស័ព្ទ">
+    <div class="row" style="margin-top:10px">
+      <button class="btn sm" id="btnAdd">➕ ជួរថ្មី</button>
+      <button class="btn sm" id="btnSwap">⇄ ប្តូរជួរឈរ</button>
+      <button class="btn sm" id="btnNew">📄 មេរៀនថ្មី</button>
+      <button class="btn sm danger" id="btnClear">🗑 លុបទាំងអស់</button>
+    </div>
+    <table class="tbl" id="tbl">
+      <thead><tr><th>#</th><th id="thA">한국어</th><th>ខ្មែរ</th><th></th><th></th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="tblEmpty">មិនទាន់មានពាក្យទេ។<br>ទៅផ្ទាំង <b>ស្កែន</b> ដើម្បីដាក់រូប ឬបិទភ្ជាប់អត្ថបទ។</div>
+  </div>
+  <div class="card">
+    <h2><span class="dot"></span>រក្សាទុក</h2>
+    <div class="row">
+      <button class="btn pri" id="btnSave">💾 ទុកក្នុង App</button>
+      <button class="btn" id="btnGoPlay">▶ ចាក់ឥឡូវ</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn sm" id="btnExpJson">⬇ ទុកក្រៅ (.json)</button>
+      <button class="btn sm" id="btnExpCsv">⬇ Excel (.csv)</button>
+    </div>
+    <p class="hint">ឯកសារ .json ទុកទាំងរូប និងពាក្យ — យកទៅទូរស័ព្ទផ្សេង ហើយចុច “នាំចូល” ក្នុងផ្ទាំង ឃ្លាំង ដើម្បីបើកវិញ។</p>
+  </div>
+</section>
+
+<!-- ============ PLAYER ============ -->
+<section class="tab" id="tab-play">
+  <div class="card stage">
+    <div class="count" id="pCount">0 / 0</div>
+    <div class="wordA" id="pA">—</div>
+    <div class="wordB" id="pB">ដាក់ពាក្យក្នុងតារាងសិន</div>
+    <div class="bar"><i id="pBar"></i></div>
+    <div class="ctrls">
+      <button class="cbtn" id="pPrev" aria-label="Previous">⏮</button>
+      <button class="cbtn big" id="pPlay" aria-label="Play">▶</button>
+      <button class="cbtn" id="pNext" aria-label="Next">⏭</button>
+    </div>
+    <div class="row" style="justify-content:center;margin-top:14px;gap:6px">
+      <button class="btn sm ghost" id="pDlA" style="flex:0 0 auto">⬇ សំឡេងជួរ ១</button>
+      <button class="btn sm ghost" id="pDlB" style="flex:0 0 auto">⬇ សំឡេងខ្មែរ</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="dot"></span>ការកំណត់ការចាក់</h2>
+    <label class="lbl" style="margin-top:0">អានតាមលំដាប់</label>
+    <div class="seg" id="segOrder">
+      <button data-v="ab">ជួរ១ → ខ្មែរ</button>
+      <button data-v="aba">ជួរ១ → ខ្មែរ → ជួរ១</button>
+      <button data-v="a">ជួរ១ តែប៉ុណ្ណោះ</button>
+      <button data-v="ba">ខ្មែរ → ជួរ១</button>
+      <button data-v="b">ខ្មែរ តែប៉ុណ្ណោះ</button>
+    </div>
+    <label class="lbl">អានម្តងទៀតក្នុងមួយពាក្យ</label>
+    <div class="seg" id="segRepeat">
+      <button data-v="1">1x</button><button data-v="2">2x</button><button data-v="3">3x</button><button data-v="5">5x</button>
+    </div>
+    <label class="lbl">ល្បឿនអាន</label>
+    <div class="rng"><input type="range" id="rRate" min="0.5" max="1.5" step="0.05"><b id="vRate"></b></div>
+    <label class="lbl">ចន្លោះពេលរវាងពាក្យ</label>
+    <div class="rng"><input type="range" id="rGap" min="0" max="6" step="0.5"><b id="vGap"></b></div>
+    <label class="lbl">ប្រភពសំឡេង</label>
+    <select id="selSource">
+      <option value="auto">ស្វ័យប្រវត្តិ (សំឡេងទូរស័ព្ទ បើមាន, បើអត់ប្រើ Google)</option>
+      <option value="phone">សំឡេងទូរស័ព្ទ (Offline)</option>
+      <option value="online">Google Voice (Online — ច្បាស់ជាង)</option>
+    </select>
+    <div class="hint" id="voiceInfo" style="margin-top:6px"></div>
+    <div style="margin-top:8px">
+      <div class="tg"><span>🔁 Loop — ចប់ហើយចាក់ឡើងវិញ</span><label class="sw"><input type="checkbox" id="tLoop"><span></span></label></div>
+      <div class="tg"><span>🔀 លាយលំដាប់ (Shuffle)</span><label class="sw"><input type="checkbox" id="tShuffle"><span></span></label></div>
+      <div class="tg"><span>🙈 លាក់អត្ថន័យខ្មែរ (សាកល្បងចងចាំ)</span><label class="sw"><input type="checkbox" id="tHide"><span></span></label></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="dot"></span>បញ្ជីចាក់ <span class="hint" style="font-weight:400">— ចុចពាក្យដើម្បីចាក់ពីទីនោះ</span></h2>
+    <div class="plist" id="plist"></div>
+  </div>
+</section>
+
+<!-- ============ LIBRARY ============ -->
+<section class="tab" id="tab-lib">
+  <div class="card">
+    <h2><span class="dot"></span>មេរៀនដែលបានទុក</h2>
+    <div id="libList"></div>
+    <div class="empty" id="libEmpty">មិនទាន់មានមេរៀនទុកទេ។<br>ចុច <b>💾 ទុកក្នុង App</b> នៅផ្ទាំងតារាង។</div>
+  </div>
+  <div class="card">
+    <h2><span class="dot"></span>នាំចូល / ទាញចេញ</h2>
+    <div class="row">
+      <button class="btn" id="btnImport">📥 នាំចូល (.json / .csv / .txt)</button>
+      <button class="btn" id="btnExpAll">📦 ទាញចេញទាំងអស់</button>
+    </div>
+    <input type="file" id="fImport" accept=".json,.csv,.txt,application/json,text/csv,text/plain" hidden>
+  </div>
+</section>
+</main>
+
+<nav>
+  <button data-tab="scan" class="on"><span class="ic">📷</span>ស្កែន</button>
+  <button data-tab="table"><span class="ic">📋</span>តារាង</button>
+  <button data-tab="play"><span class="ic">🎧</span>ចាក់</button>
+  <button data-tab="lib"><span class="ic">📚</span>ឃ្លាំង</button>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* ================= helpers ================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+let toastT;
+function toast(msg, ms = 2600){ const t=$('#toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'), ms); }
+function lsGet(k, d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch{ return d; } }
+function lsSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch{} }
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function safeName(s){ return (String(s||'vocab').replace(/[\\/:*?"<>|\n\r]+/g,' ').trim().slice(0,60)) || 'vocab'; }
+function download(name, data, type){
+  const blob = data instanceof Blob ? data : new Blob([data], {type: type || 'application/octet-stream'});
+  const url = URL.createObjectURL(blob); const a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+/* ================= languages ================= */
+const LANGS = {
+  ko:{name:'한국어 (Korean)', short:'한국어', ocr:'kor', tts:'ko-KR', g:'ko'},
+  en:{name:'English', short:'English', ocr:'eng', tts:'en-US', g:'en'},
+  ja:{name:'日本語 (Japanese)', short:'日本語', ocr:'jpn', tts:'ja-JP', g:'ja'},
+  zh:{name:'中文 (Chinese)', short:'中文', ocr:'chi_sim', tts:'zh-CN', g:'zh-CN'},
+  th:{name:'ไทย (Thai)', short:'ไทย', ocr:'tha', tts:'th-TH', g:'th'},
+  vi:{name:'Tiếng Việt', short:'Việt', ocr:'vie', tts:'vi-VN', g:'vi'}
+};
+const KM = {name:'ខ្មែរ', short:'ខ្មែរ', ocr:'khm', tts:'km-KH', g:'km'};
+const L1 = () => LANGS[S.lang1] || LANGS.ko;
+
+/* ================= state ================= */
+const DEF_SET = {order:'ab', repeat:1, rate:0.9, gap:1.5, source:'auto', loop:true, shuffle:false, hideB:false};
+const S = Object.assign({name:'', lang1:'ko', items:[], image:null, editingId:null}, lsGet('vl_draft', {}));
+S.settings = Object.assign({}, DEF_SET, lsGet('vl_settings', {}));
+if (!Array.isArray(S.items)) S.items = [];
+let draftT;
+function saveDraft(){ clearTimeout(draftT); draftT = setTimeout(() => lsSet('vl_draft', {name:S.name, lang1:S.lang1, items:S.items, image:S.image, editingId:S.editingId}), 300); }
+function saveSettings(){ lsSet('vl_settings', S.settings); }
+function itemsChanged(){ P.dirty = true; saveDraft(); updateHeader(); }
+
+/* ================= tabs ================= */
+function showTab(name){
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.id === 'tab-' + name));
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
+  if (name === 'table') renderTable();
+  if (name === 'play') { if (P.dirty && !P.playing) rebuildOrder(); renderCard(); renderPlist(); updateVoiceInfo(); }
+  if (name === 'lib') renderLib();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+
+function updateHeader(){
+  const n = S.items.filter(i => i.a || i.b).length;
+  $('#hdrCount').textContent = n + ' ពាក្យ';
+  $('#hdrSub').textContent = S.name ? ('📘 ' + S.name) : 'ថតរូប → តារាង → សំឡេង → ចាក់ Loop';
+}
+
+/* ================= parsing ================= */
+const KM_RE = /[ក-៿᧠-᧿]+(?:[\s,.()​]*[ក-៿᧠-᧿]+)*/g;
+function cleanPart(s){
+  return s.replace(/[=:：|→⇒•·_]+/g, ' ')
+          .replace(/^[\s\-–—.,;)\]]+|[\s\-–—.,;(\[]+$/g, '')
+          .replace(/\s+/g, ' ').trim();
+}
+function parseLine(raw){
+  let line = String(raw).replace(/​/g, '').trim();
+  if (!line) return null;
+  line = line.replace(/^[\s(\[]*(?:\d{1,3}|[០-៩]{1,3})\s*[.)\]:\-、]\s*/, '');
+  KM_RE.lastIndex = 0;
+  const km = (line.match(KM_RE) || []).join(' ').replace(/\s+/g, ' ').trim();
+  let rest = line.replace(KM_RE, ' ');
+  if (!km) {
+    const parts = rest.split(/\s*(?:=|：|:|\t|→| - | – | — |,)\s*/);
+    if (parts.length >= 2 && parts[0].trim() && parts.slice(1).join(' ').trim())
+      return {a: cleanPart(parts[0]), b: cleanPart(parts.slice(1).join(' '))};
+  }
+  rest = cleanPart(rest);
+  if (!/\p{L}/u.test(rest)) rest = '';
+  if (!rest && !km) return null;
+  return {a: rest, b: km};
+}
+function pairLines(lines){
+  const parsed = lines.map(parseLine).filter(Boolean);
+  const both = parsed.filter(p => p.a && p.b).length;
+  const onlyA = parsed.filter(p => p.a && !p.b), onlyB = parsed.filter(p => !p.a && p.b);
+  // two separate columns read one after another → zip them
+  if (both === 0 && onlyA.length && onlyA.length === onlyB.length)
+    return onlyA.map((p, i) => ({a: p.a, b: onlyB[i].b}));
+  const out = []; let pend = null;
+  for (const p of parsed) {
+    if (p.a && p.b) { if (pend) { out.push(pend); pend = null; } out.push({a:p.a, b:p.b}); }
+    else if (p.a) { if (pend) out.push(pend); pend = {a:p.a, b:''}; }
+    else {
+      if (pend) { pend.b = p.b; out.push(pend); pend = null; }
+      else if (out.length) { const last = out[out.length-1]; last.b = (last.b ? last.b + ' ' : '') + p.b; }
+      else out.push({a:'', b:p.b});
+    }
+  }
+  if (pend) out.push(pend);
+  return out;
+}
+
+/* ================= images & OCR ================= */
+let pickedFiles = [];
+$('#btnCam').onclick = () => $('#fCam').click();
+$('#btnGal').onclick = () => $('#fGal').click();
+$('#fCam').onchange = e => addFiles(e.target.files);
+$('#fGal').onchange = e => addFiles(e.target.files);
+function addFiles(list){
+  for (const f of list) if (f.type.startsWith('image/')) pickedFiles.push({file:f, url:URL.createObjectURL(f)});
+  $('#fCam').value = ''; $('#fGal').value = '';
+  renderThumbs();
+}
+function renderThumbs(){
+  $('#thumbs').innerHTML = pickedFiles.map((p, i) => `<div class="t"><img src="${p.url}" alt=""><button class="x" data-i="${i}">✕</button></div>`).join('');
+  $('#btnScan').disabled = !pickedFiles.length;
+}
+$('#thumbs').onclick = e => {
+  const b = e.target.closest('.x'); if (!b) return;
+  const i = +b.dataset.i; URL.revokeObjectURL(pickedFiles[i].url); pickedFiles.splice(i, 1); renderThumbs();
+};
+function loadImg(src){ return new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src; }); }
+async function prepImage(url){
+  const img = await loadImg(url);
+  const w0 = img.naturalWidth, h0 = img.naturalHeight, mx = Math.max(w0, h0);
+  const sc = mx < 1500 ? 1500 / mx : (mx > 2800 ? 2800 / mx : 1);
+  const c = document.createElement('canvas'); c.width = Math.round(w0 * sc); c.height = Math.round(h0 * sc);
+  const ctx = c.getContext('2d', {willReadFrequently:true});
+  ctx.imageSmoothingQuality = 'high'; ctx.drawImage(img, 0, 0, c.width, c.height);
+  const d = ctx.getImageData(0, 0, c.width, c.height), px = d.data, hist = new Uint32Array(256);
+  for (let i = 0; i < px.length; i += 4) { const g = (px[i]*0.299 + px[i+1]*0.587 + px[i+2]*0.114) | 0; px[i] = g; hist[g]++; }
+  const tot = px.length / 4; let lo = 0, hi = 255, acc = 0;
+  for (let i = 0; i < 256; i++) { acc += hist[i]; if (acc > tot * 0.01) { lo = i; break; } }
+  acc = 0; for (let i = 255; i >= 0; i--) { acc += hist[i]; if (acc > tot * 0.01) { hi = i; break; } }
+  const span = Math.max(1, hi - lo);
+  for (let i = 0; i < px.length; i += 4) { let g = (px[i] - lo) * 255 / span; g = g < 0 ? 0 : g > 255 ? 255 : g; px[i] = px[i+1] = px[i+2] = g; }
+  ctx.putImageData(d, 0, 0);
+  return c;
+}
+async function makeThumb(url){
+  const img = await loadImg(url); const mx = 360, sc = Math.min(1, mx / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * sc); c.height = Math.round(img.naturalHeight * sc);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.72);
+}
+let tessP = null, worker = null, workerLangs = '';
+function loadTess(){
+  if (window.Tesseract) return Promise.resolve();
+  if (tessP) return tessP;
+  tessP = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    s.onload = res; s.onerror = () => { tessP = null; rej(new Error('load')); };
+    document.head.appendChild(s);
+  });
+  return tessP;
+}
+const STAT_KM = {
+  'loading tesseract core':'កំពុងផ្ទុកម៉ាស៊ីនស្កែន…', 'initializing tesseract':'កំពុងរៀបចំ…',
+  'loading language traineddata':'កំពុងទាញទិន្នន័យភាសា (លើកដំបូងយូរបន្តិច)…', 'initializing api':'កំពុងរៀបចំ…',
+  'recognizing text':'កំពុងអានអក្សរ…'
+};
+let ocrStep = '';
+function onOcrLog(m){
+  const st = STAT_KM[m.status] || m.status;
+  $('#ocrStatus').textContent = ocrStep + st + (m.progress ? ' ' + Math.round(m.progress * 100) + '%' : '');
+  if (m.status === 'recognizing text') $('#ocrProg').style.width = Math.round(m.progress * 100) + '%';
+}
+async function getWorker(langs){
+  if (worker && workerLangs === langs) return worker;
+  if (worker) { try { await worker.terminate(); } catch {} worker = null; }
+  worker = await Tesseract.createWorker(langs, 1, {logger: onOcrLog});
+  workerLangs = langs;
+  return worker;
+}
+$('#btnScan').onclick = async () => {
+  if (!pickedFiles.length) return;
+  const btn = $('#btnScan'); btn.disabled = true; $('#ocrProgWrap').hidden = false; $('#ocrProg').style.width = '0';
+  let added = 0;
+  try {
+    $('#ocrStatus').textContent = 'កំពុងផ្ទុកម៉ាស៊ីនស្កែន…';
+    await loadTess();
+    const w = await getWorker(L1().ocr + '+khm');
+    await w.setParameters({tessedit_pageseg_mode: $('#psm').value, preserve_interword_spaces: '1'});
+    for (let i = 0; i < pickedFiles.length; i++) {
+      ocrStep = `រូប ${i+1}/${pickedFiles.length} — `;
+      $('#ocrProg').style.width = '0';
+      const cv = await prepImage(pickedFiles[i].url);
+      const {data} = await w.recognize(cv);
+      const rows = pairLines((data.text || '').split(/\r?\n/));
+      S.items.push(...rows); added += rows.length;
+      if (!S.image) S.image = await makeThumb(pickedFiles[i].url);
+    }
+    itemsChanged();
+    $('#ocrStatus').textContent = `✅ រួចរាល់ — បានបញ្ចូល ${added} ជួរ។ ពិនិត្យ/កែក្នុងតារាង។`;
+    $('#ocrProg').style.width = '100%';
+    pickedFiles.forEach(p => URL.revokeObjectURL(p.url)); pickedFiles = []; renderThumbs();
+    toast(`បានបញ្ចូល ${added} ពាក្យ`);
+    if (added) setTimeout(() => showTab('table'), 500);
+  } catch (e) {
+    console.error(e);
+    $('#ocrStatus').textContent = '❌ ស្កែនមិនបាន — ពិនិត្យ Internet (លើកដំបូងត្រូវទាញទិន្នន័យភាសា) ហើយសាកម្តងទៀត។';
+  } finally { btn.disabled = !pickedFiles.length; ocrStep = ''; }
+};
+$('#btnPaste').onclick = () => {
+  const rows = pairLines($('#pasteTxt').value.split(/\r?\n/));
+  if (!rows.length) return toast('មិនមានអត្ថបទ');
+  S.items.push(...rows); itemsChanged(); $('#pasteTxt').value = '';
+  toast(`បានបញ្ចូល ${rows.length} ពាក្យ`); showTab('table');
+};
+
+/* ================= language select ================= */
+$('#lang1').innerHTML = Object.entries(LANGS).map(([k, v]) => `<option value="${k}">${v.name}</option>`).join('');
+$('#lang1').value = S.lang1;
+$('#lang1').onchange = e => { S.lang1 = e.target.value; saveDraft(); $('#thA').textContent = L1().short; updateVoiceInfo(); };
+
+/* ================= table ================= */
+function renderTable(){
+  $('#thA').textContent = L1().short;
+  $('#lessonName').value = S.name || '';
+  const tb = $('#tbody');
+  tb.innerHTML = S.items.map((it, i) => `<tr data-i="${i}">
+    <td class="n">${i+1}</td>
+    <td><input type="text" class="a" data-k="a" value="${esc(it.a)}"></td>
+    <td><input type="text" data-k="b" value="${esc(it.b)}"></td>
+    <td><button class="ib" data-act="say" title="ស្តាប់">🔊</button></td>
+    <td><button class="ib del" data-act="del" title="លុប">✕</button></td></tr>`).join('');
+  $('#tblEmpty').style.display = S.items.length ? 'none' : 'block';
+  $('#tbl').style.display = S.items.length ? '' : 'none';
+  updateHeader();
+}
+$('#tbody').addEventListener('input', e => {
+  const inp = e.target; if (!inp.dataset.k) return;
+  const i = +inp.closest('tr').dataset.i; S.items[i][inp.dataset.k] = inp.value; itemsChanged();
+});
+$('#tbody').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const i = +b.closest('tr').dataset.i;
+  if (b.dataset.act === 'del') { S.items.splice(i, 1); itemsChanged(); renderTable(); }
+  if (b.dataset.act === 'say') {
+    pause(); const it = S.items[i];
+    await speak(it.a, L1(), S.settings.rate); await sleep(250); await speak(it.b, KM, S.settings.rate);
+  }
+});
+$('#lessonName').oninput = e => { S.name = e.target.value; saveDraft(); updateHeader(); };
+$('#btnAdd').onclick = () => {
+  S.items.push({a:'', b:''}); itemsChanged(); renderTable();
+  const ins = $('#tbody').querySelectorAll('tr:last-child input'); if (ins[0]) ins[0].focus();
+};
+$('#btnSwap').onclick = () => { S.items = S.items.map(it => ({a:it.b, b:it.a})); itemsChanged(); renderTable(); toast('បានប្តូរជួរឈរ'); };
+$('#btnClear').onclick = () => { if (!S.items.length || !confirm('លុបពាក្យទាំងអស់ក្នុងតារាង?')) return; pause(); S.items = []; itemsChanged(); renderTable(); };
+$('#btnNew').onclick = () => {
+  if (S.items.length && !confirm('បើកមេរៀនថ្មី? (ពាក្យដែលមិនទាន់ទុក នឹងបាត់)')) return;
+  pause(); Object.assign(S, {name:'', items:[], image:null, editingId:null}); P.cur = 0; itemsChanged(); renderTable(); showTab('scan');
+};
+$('#btnGoPlay').onclick = () => { showTab('play'); if (validItems().length) { P.cur = 0; rebuildOrder(); playLoop(); } };
+
+/* ================= storage (IndexedDB + fallback) ================= */
+const DB = {
+  db: null, mem: false,
+  open(){
+    return new Promise(res => {
+      try {
+        const r = indexedDB.open('vocabloop', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('lessons', {keyPath:'id'});
+        r.onsuccess = () => { this.db = r.result; res(); };
+        r.onerror = () => { this.mem = true; res(); };
+      } catch { this.mem = true; res(); }
+    });
+  },
+  _st(mode){ return this.db.transaction('lessons', mode).objectStore('lessons'); },
+  _req(q){ return new Promise((res, rej) => { q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); },
+  async all(){ if (this.mem) return lsGet('vl_lessons', []); return this._req(this._st('readonly').getAll()); },
+  async put(o){
+    if (this.mem) { const a = lsGet('vl_lessons', []).filter(x => x.id !== o.id); a.push(o); lsSet('vl_lessons', a); return; }
+    return this._req(this._st('readwrite').put(o));
+  },
+  async del(id){
+    if (this.mem) { lsSet('vl_lessons', lsGet('vl_lessons', []).filter(x => x.id !== id)); return; }
+    return this._req(this._st('readwrite').delete(id));
+  }
+};
+let lessons = [];
+async function refreshLessons(){ try { lessons = (await DB.all()).sort((a, b) => b.updated - a.updated); } catch { lessons = []; } }
+function currentLesson(){
+  const items = S.items.filter(i => i.a || i.b).map(i => ({a:i.a.trim(), b:i.b.trim()}));
+  const name = (S.name || '').trim() || ('មេរៀន ' + new Date().toLocaleDateString('en-GB'));
+  return {id: S.editingId || uid(), name, lang1: S.lang1, items, image: S.image || null,
+          created: (lessons.find(l => l.id === S.editingId) || {}).created || Date.now(), updated: Date.now()};
+}
+$('#btnSave').onclick = async () => {
+  const l = currentLesson(); if (!l.items.length) return toast('មិនទាន់មានពាក្យ');
+  try {
+    await DB.put(l); S.editingId = l.id; S.name = l.name; saveDraft(); await refreshLessons();
+    $('#lessonName').value = l.name; updateHeader(); toast('💾 បានទុក “' + l.name + '”');
+  } catch (e) { console.error(e); toast('❌ ទុកមិនបាន'); }
+};
+function exportJSON(list, fname){
+  download(safeName(fname) + '.json', JSON.stringify({app:'VocabLoop', version:1, exported:new Date().toISOString(), lessons:list}, null, 1), 'application/json');
+}
+function exportCSV(l){
+  const q = s => '"' + String(s).replace(/"/g, '""') + '"';
+  const csv = '﻿' + [q(LANGS[l.lang1]?.short || 'A') + ',' + q('ខ្មែរ'), ...l.items.map(i => q(i.a) + ',' + q(i.b))].join('\r\n');
+  download(safeName(l.name) + '.csv', csv, 'text/csv;charset=utf-8');
+}
+$('#btnExpJson').onclick = () => { const l = currentLesson(); if (!l.items.length) return toast('មិនទាន់មានពាក្យ'); exportJSON([l], l.name); };
+$('#btnExpCsv').onclick = () => { const l = currentLesson(); if (!l.items.length) return toast('មិនទាន់មានពាក្យ'); exportCSV(l); };
+$('#btnExpAll').onclick = async () => { await refreshLessons(); if (!lessons.length) return toast('មិនទាន់មានមេរៀន'); exportJSON(lessons, 'VocabLoop_all_' + new Date().toISOString().slice(0,10)); };
+$('#btnImport').onclick = () => $('#fImport').click();
+$('#fImport').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const txt = await f.text(); let list = [];
+    if (/\.json$/i.test(f.name) || txt.trim().startsWith('{')) {
+      const j = JSON.parse(txt); const arr = Array.isArray(j) ? j : (j.lessons || [j]);
+      list = arr.filter(l => l && Array.isArray(l.items)).map(l => ({
+        id: l.id || uid(), name: l.name || f.name.replace(/\.\w+$/, ''), lang1: LANGS[l.lang1] ? l.lang1 : 'ko',
+        items: l.items.map(i => ({a: String(i.a || ''), b: String(i.b || '')})), image: l.image || null,
+        created: l.created || Date.now(), updated: Date.now()}));
+    } else {
+      const lines = txt.replace(/^﻿/, '').split(/\r?\n/).map(s => {
+        const m = s.match(/^"((?:[^"]|"")*)","((?:[^"]|"")*)"$/);
+        return m ? m[1].replace(/""/g, '"') + ' = ' + m[2].replace(/""/g, '"') : s;
+      });
+      let items = pairLines(lines);
+      if (items.length && /한국어|English|日本語|中文|ไทย|Việt|^A$/.test(items[0].a) && items[0].b === 'ខ្មែរ') items.shift();
+      if (items.length) list = [{id: uid(), name: f.name.replace(/\.\w+$/, ''), lang1: S.lang1, items, image: null, created: Date.now(), updated: Date.now()}];
+    }
+    if (!list.length) return toast('❌ មិនមានទិន្នន័យក្នុងឯកសារ');
+    for (const l of list) await DB.put(l);
+    await refreshLessons(); renderLib(); toast(`📥 បាននាំចូល ${list.length} មេរៀន`);
+  } catch (err) { console.error(err); toast('❌ ឯកសារមិនត្រឹមត្រូវ'); }
+};
+function loadLesson(l){
+  pause();
+  Object.assign(S, {name: l.name, lang1: l.lang1 || 'ko', items: l.items.map(i => ({...i})), image: l.image, editingId: l.id});
+  $('#lang1').value = S.lang1; P.cur = 0; itemsChanged();
+}
+function renderLib(){
+  $('#libEmpty').style.display = lessons.length ? 'none' : 'block';
+  $('#libList').innerHTML = lessons.map(l => `<div class="lesson" data-id="${esc(l.id)}">
+    <div class="im">${l.image ? `<img src="${l.image}" alt="">` : '📘'}</div>
+    <div class="info"><b>${esc(l.name)}</b><small>${l.items.length} ពាក្យ · ${esc(LANGS[l.lang1]?.short || '')} · ${new Date(l.updated).toLocaleDateString('en-GB')}</small></div>
+    <div class="acts">
+      <button class="ib" data-act="play" title="ចាក់">▶</button>
+      <button class="ib" data-act="open" title="កែ">✎</button>
+      <button class="ib" data-act="exp" title="ទាញចេញ">⬇</button>
+      <button class="ib del" data-act="del" title="លុប">🗑</button>
+    </div></div>`).join('');
+}
+$('#libList').onclick = async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const l = lessons.find(x => x.id === b.closest('.lesson').dataset.id); if (!l) return;
+  const act = b.dataset.act;
+  if (act === 'play') { loadLesson(l); showTab('play'); rebuildOrder(); playLoop(); }
+  if (act === 'open') { loadLesson(l); showTab('table'); }
+  if (act === 'exp') exportJSON([l], l.name);
+  if (act === 'del') {
+    if (!confirm('លុប “' + l.name + '”?')) return;
+    await DB.del(l.id); if (S.editingId === l.id) { S.editingId = null; saveDraft(); }
+    await refreshLessons(); renderLib(); toast('បានលុប');
+  }
+};
+
+/* ================= speech engine ================= */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices() || []; } catch { voices = []; } updateVoiceInfo(); }
+if ('speechSynthesis' in window) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+function findVoice(tag){
+  const t = tag.toLowerCase(), p = t.split('-')[0];
+  const norm = v => v.lang.toLowerCase().replace('_', '-');
+  return voices.find(v => norm(v) === t) || voices.find(v => norm(v).split('-')[0] === p) || null;
+}
+function updateVoiceInfo(){
+  const el = $('#voiceInfo'); if (!el) return;
+  const a = findVoice(L1().tts), b = findVoice(KM.tts);
+  el.innerHTML = `សំឡេងទូរស័ព្ទ: ${esc(L1().short)} ${a ? '✅' : '❌'} · ខ្មែរ ${b ? '✅' : '❌'}` +
+    ((!a || !b) ? ' — ភាសាដែល ❌ នឹងប្រើ Google Voice (ត្រូវការ Internet)' : '');
+}
+function gUrl(text, L){
+  return `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${encodeURIComponent(L.g)}&q=${encodeURIComponent(text.slice(0, 200))}`;
+}
+const audio = new Audio(); audio.preload = 'auto';
+let curFin = null;
+function stopSpeech(){
+  try { speechSynthesis.cancel(); } catch {}
+  try { audio.pause(); } catch {}
+  if (curFin) { const f = curFin; curFin = null; f(); }
+}
+function speakPhone(text, L, rate, v){
+  return new Promise(res => {
+    if (!('speechSynthesis' in window)) return res();
+    let done = false, t;
+    const fin = () => { if (done) return; done = true; clearTimeout(t); if (curFin === fin) curFin = null; res(); };
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = L.tts; if (v) u.voice = v; u.rate = rate;
+    u.onend = fin; u.onerror = fin;
+    t = setTimeout(fin, 4000 + text.length * 450 / rate);
+    curFin = fin;
+    try { speechSynthesis.cancel(); speechSynthesis.resume(); speechSynthesis.speak(u); } catch { fin(); }
+  });
+}
+function speakOnline(text, L, rate){
+  return new Promise((res, rej) => {
+    let done = false, t;
+    const fin = err => {
+      if (done) return; done = true; clearTimeout(t);
+      audio.onended = audio.onerror = null; if (curFin === fin) curFin = null;
+      err ? rej(err) : res();
+    };
+    audio.onended = () => fin(); audio.onerror = () => fin(new Error('audio'));
+    curFin = () => fin();
+    t = setTimeout(() => fin(new Error('timeout')), 15000);
+    audio.src = gUrl(text, L); audio.defaultPlaybackRate = rate; audio.playbackRate = rate;
+    const p = audio.play(); if (p && p.catch) p.catch(e => fin(e));
+  });
+}
+async function speak(text, L, rate){
+  text = String(text || '').trim(); if (!text) return;
+  const src = S.settings.source, v = findVoice(L.tts);
+  if (src === 'phone' || (src === 'auto' && v)) return speakPhone(text, L, rate, v);
+  try { await speakOnline(text, L, rate); }
+  catch (e) { if (curFin === null && e && e.message !== 'stopped') await speakPhone(text, L, rate, v); }
+}
+
+/* ================= player ================= */
+const P = {cur:0, playing:false, token:0, order:[], dirty:true, part:null};
+const validItems = () => S.items.map((it, i) => i).filter(i => (S.items[i].a || '').trim() || (S.items[i].b || '').trim());
+function shuffleArr(a){ for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function rebuildOrder(){
+  const curIdx = P.order[P.cur];
+  P.order = validItems(); if (S.settings.shuffle) shuffleArr(P.order);
+  const pos = P.order.indexOf(curIdx); P.cur = pos >= 0 ? pos : Math.min(P.cur, Math.max(0, P.order.length - 1));
+  P.dirty = false;
+}
+const SEQ = {ab:['a','b'], aba:['a','b','a'], a:['a'], ba:['b','a'], b:['b']};
+let wakeLock = null;
+async function wakeOn(){ try { if ('wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => wakeLock = null); } } catch {} }
+function wakeOff(){ try { if (wakeLock) wakeLock.release(); } catch {} wakeLock = null; }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && P.playing) wakeOn(); });
+
+async function playLoop(){
+  if (P.dirty || !P.order.length) rebuildOrder();
+  if (!P.order.length) { toast('មិនទាន់មានពាក្យក្នុងតារាង'); return; }
+  const my = ++P.token; P.playing = true; updatePlayBtn(); wakeOn();
+  while (my === P.token) {
+    if (P.cur >= P.order.length) {
+      if (!S.settings.loop) break;
+      P.cur = 0; if (S.settings.shuffle) { P.order = shuffleArr(validItems()); }
+    }
+    const it = S.items[P.order[P.cur]];
+    if (!it) { P.cur++; continue; }
+    renderCard(); markPlist();
+    const seq = SEQ[S.settings.order] || SEQ.ab;
+    for (let r = 0; r < S.settings.repeat; r++) {
+      for (const k of seq) {
+        if (my !== P.token) return;
+        P.part = k; renderCard();
+        await speak(it[k], k === 'a' ? L1() : KM, S.settings.rate);
+        if (my !== P.token) return;
+        await sleep(350);
+      }
+      if (r < S.settings.repeat - 1) await sleep(500);
+    }
+    P.part = null; renderCard();
+    if (S.settings.gap > 0) await sleep(S.settings.gap * 1000);
+    if (my !== P.token) return;
+    P.cur++;
+  }
+  if (my === P.token) { P.playing = false; P.cur = 0; P.part = null; updatePlayBtn(); renderCard(); markPlist(); wakeOff(); }
+}
+function pause(){ P.token++; P.playing = false; P.part = null; stopSpeech(); updatePlayBtn(); wakeOff(); renderCard(); }
+function step(d){
+  const was = P.playing; pause();
+  if (P.dirty || !P.order.length) rebuildOrder();
+  const n = P.order.length; if (!n) return;
+  P.cur = ((P.cur + d) % n + n) % n; renderCard(); markPlist();
+  if (was) playLoop();
+}
+function updatePlayBtn(){ $('#pPlay').textContent = P.playing ? '⏸' : '▶'; }
+function renderCard(){
+  const n = P.order.length, idx = P.order[Math.min(P.cur, n - 1)], it = S.items[idx];
+  if (!n || !it) {
+    $('#pCount').textContent = '0 / 0'; $('#pA').textContent = '—'; $('#pB').textContent = 'ដាក់ពាក្យក្នុងតារាងសិន'; $('#pBar').style.width = '0'; return;
+  }
+  const pos = Math.min(P.cur, n - 1);
+  $('#pCount').textContent = `${pos + 1} / ${n}` + (S.settings.loop ? '  🔁' : '');
+  $('#pA').textContent = it.a || '—';
+  const hide = S.settings.hideB && P.part !== 'b';
+  $('#pB').textContent = hide ? '• • •' : (it.b || '—');
+  $('#pA').classList.toggle('speaking', P.part === 'a');
+  $('#pB').classList.toggle('speaking', P.part === 'b');
+  $('#pBar').style.width = ((pos + 1) / n * 100) + '%';
+  if ('mediaSession' in navigator) {
+    try { navigator.mediaSession.metadata = new MediaMetadata({title: it.a || it.b, artist: it.b || '', album: S.name || 'Vocab Loop'}); } catch {}
+  }
+}
+function renderPlist(){
+  if (P.dirty) rebuildOrder();
+  $('#plist').innerHTML = P.order.length ? P.order.map((idx, pos) => {
+    const it = S.items[idx];
+    return `<div class="pi" data-pos="${pos}"><span class="k">${pos + 1}</span><span class="a">${esc(it.a)}</span><span class="b">${esc(it.b)}</span></div>`;
+  }).join('') : '<div class="empty">មិនទាន់មានពាក្យ</div>';
+  markPlist();
+}
+function markPlist(){
+  const els = $('#plist').querySelectorAll('.pi');
+  els.forEach(el => el.classList.toggle('cur', +el.dataset.pos === P.cur));
+  const c = $('#plist').querySelector('.pi.cur');
+  if (c && $('#tab-play').classList.contains('on')) {
+    const box = $('#plist'); const top = c.offsetTop - box.offsetTop - box.clientHeight / 2 + c.clientHeight / 2;
+    box.scrollTo({top, behavior:'smooth'});
+  }
+}
+$('#plist').onclick = e => {
+  const el = e.target.closest('.pi'); if (!el) return;
+  pause(); P.cur = +el.dataset.pos; renderCard(); markPlist(); playLoop();
+};
+$('#pPlay').onclick = () => P.playing ? pause() : playLoop();
+$('#pNext').onclick = () => step(1);
+$('#pPrev').onclick = () => step(-1);
+if ('mediaSession' in navigator) {
+  try {
+    navigator.mediaSession.setActionHandler('play', () => { if (!P.playing) playLoop(); });
+    navigator.mediaSession.setActionHandler('pause', () => pause());
+    navigator.mediaSession.setActionHandler('nexttrack', () => step(1));
+    navigator.mediaSession.setActionHandler('previoustrack', () => step(-1));
+  } catch {}
+}
+async function downloadAudio(k){
+  if (P.dirty || !P.order.length) rebuildOrder();
+  const it = S.items[P.order[P.cur]]; if (!it || !(it[k] || '').trim()) return toast('មិនមានពាក្យ');
+  const L = k === 'a' ? L1() : KM, text = it[k].trim(), url = gUrl(text, L);
+  try {
+    const r = await fetch(url, {referrerPolicy:'no-referrer'}); if (!r.ok) throw new Error(r.status);
+    download(safeName(text) + '.mp3', await r.blob(), 'audio/mpeg'); toast('⬇ បានទាញយកសំឡេង');
+  } catch {
+    window.open(url, '_blank');
+    toast('បានបើកសំឡេងក្នុង Tab ថ្មី — ចុច ⋮ → Download ដើម្បីរក្សាទុក', 4500);
+  }
+}
+$('#pDlA').onclick = () => downloadAudio('a');
+$('#pDlB').onclick = () => downloadAudio('b');
+
+/* ================= settings UI ================= */
+function bindSeg(id, key, cast){
+  const box = $(id);
+  const sync = () => box.querySelectorAll('button').forEach(b => b.classList.toggle('on', String(S.settings[key]) === b.dataset.v));
+  box.onclick = e => { const b = e.target.closest('button'); if (!b) return; S.settings[key] = cast(b.dataset.v); saveSettings(); sync(); };
+  sync();
+}
+bindSeg('#segOrder', 'order', String);
+bindSeg('#segRepeat', 'repeat', Number);
+function bindRange(id, vid, key, fmt){
+  const r = $(id), v = $(vid);
+  r.value = S.settings[key]; v.textContent = fmt(S.settings[key]);
+  r.oninput = () => { S.settings[key] = parseFloat(r.value); v.textContent = fmt(S.settings[key]); saveSettings(); };
+}
+bindRange('#rRate', '#vRate', 'rate', x => x.toFixed(2) + 'x');
+bindRange('#rGap', '#vGap', 'gap', x => x.toFixed(1) + 's');
+$('#selSource').value = S.settings.source;
+$('#selSource').onchange = e => { S.settings.source = e.target.value; saveSettings(); };
+function bindToggle(id, key, after){
+  const t = $(id); t.checked = !!S.settings[key];
+  t.onchange = () => { S.settings[key] = t.checked; saveSettings(); if (after) after(); };
+}
+bindToggle('#tLoop', 'loop', renderCard);
+bindToggle('#tShuffle', 'shuffle', () => { P.dirty = true; if (!P.playing) { rebuildOrder(); P.cur = 0; } renderPlist(); renderCard(); });
+bindToggle('#tHide', 'hideB', renderCard);
+
+/* ================= init ================= */
+(async function init(){
+  $('#thA').textContent = L1().short;
+  updateHeader();
+  await DB.open(); await refreshLessons();
+  if (S.items.length) toast('បានបើកការងារចុងក្រោយរបស់អ្នកឡើងវិញ');
+})();
+</script>
+</body>
+</html>
