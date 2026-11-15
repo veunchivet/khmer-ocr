@@ -285,7 +285,9 @@ nav button.on .ic{filter:drop-shadow(0 0 8px rgba(139,108,255,.8))}
 <section class="tab" id="tab-text">
   <div class="card">
     <h2><span class="dot"></span>អត្ថបទ → ពាក្យដើម + បកប្រែ</h2>
-    <textarea id="txtIn" style="min-height:150px" placeholder="បិទភ្ជាប់អត្ថបទកូរ៉េនៅទីនេះ…&#10;ឧ. 저는 어제 친구와 학교에 갔어요. 날씨가 추워서 집에서 쉬었어요."></textarea>
+    <label class="lbl" style="margin-top:0">ភាសារបស់អត្ថបទ (បកប្រែទៅជាខ្មែរ)</label>
+    <select id="txtLang"></select>
+    <textarea id="txtIn" style="min-height:150px;margin-top:8px" placeholder="បិទភ្ជាប់អត្ថបទកូរ៉េនៅទីនេះ…&#10;ឧ. 저는 어제 친구와 학교에 갔어요. 날씨가 추워서 집에서 쉬었어요."></textarea>
     <div class="row" style="margin-top:8px">
       <button class="btn sm" id="txtFromImg">📷 យកអត្ថបទពីរូប</button>
       <button class="btn sm danger" id="txtClear">🗑 សម្អាត</button>
@@ -303,7 +305,7 @@ nav button.on .ic{filter:drop-shadow(0 0 8px rgba(139,108,255,.8))}
     <h2><span class="dot"></span>ការបកប្រែអត្ថបទ</h2>
     <div id="trOut" class="trout"></div>
     <div class="row" style="margin-top:10px">
-      <button class="btn sm" id="sayKo">🔊 អានកូរ៉េ</button>
+      <button class="btn sm" id="sayKo">🔊 អានអត្ថបទដើម</button>
       <button class="btn sm" id="sayKm">🔊 អានខ្មែរ</button>
       <button class="btn sm" id="copyTr">📋 ចម្លង</button>
     </div>
@@ -383,7 +385,17 @@ const LANGS = {
   ja:{name:'日本語 (Japanese)', short:'日本語', ocr:'jpn', tts:'ja-JP', g:'ja'},
   zh:{name:'中文 (Chinese)', short:'中文', ocr:'chi_sim', tts:'zh-CN', g:'zh-CN'},
   th:{name:'ไทย (Thai)', short:'ไทย', ocr:'tha', tts:'th-TH', g:'th'},
-  vi:{name:'Tiếng Việt', short:'Việt', ocr:'vie', tts:'vi-VN', g:'vi'}
+  vi:{name:'Tiếng Việt', short:'Việt', ocr:'vie', tts:'vi-VN', g:'vi'},
+  fr:{name:'Français', short:'Français', ocr:'fra', tts:'fr-FR', g:'fr'},
+  de:{name:'Deutsch', short:'Deutsch', ocr:'deu', tts:'de-DE', g:'de'},
+  es:{name:'Español', short:'Español', ocr:'spa', tts:'es-ES', g:'es'},
+  ru:{name:'Русский', short:'Русский', ocr:'rus', tts:'ru-RU', g:'ru'},
+  id:{name:'Bahasa Indonesia', short:'Indonesia', ocr:'ind', tts:'id-ID', g:'id'},
+  ms:{name:'Bahasa Melayu', short:'Melayu', ocr:'msa', tts:'ms-MY', g:'ms'},
+  lo:{name:'ລາວ (Lao)', short:'ລາວ', ocr:'lao', tts:'lo-LA', g:'lo'},
+  my:{name:'မြန်မာ (Myanmar)', short:'မြန်မာ', ocr:'mya', tts:'my-MM', g:'my'},
+  hi:{name:'हिन्दी (Hindi)', short:'हिन्दी', ocr:'hin', tts:'hi-IN', g:'hi'},
+  ar:{name:'العربية (Arabic)', short:'العربية', ocr:'ara', tts:'ar-SA', g:'ar'}
 };
 const KM = {name:'ខ្មែរ', short:'ខ្មែរ', ocr:'khm', tts:'km-KH', g:'km'};
 const L1 = () => LANGS[S.lang1] || LANGS.ko;
@@ -561,6 +573,8 @@ async function getWorker(langs){
 /* ---------- smart scan: find each word on the page, read it alone ---------- */
 const SCRIPT_RE = {ko:/[가-힯ᄀ-ᇿ㄰-㆏]/, ja:/[぀-ヿ一-鿿]/, zh:/[一-鿿]/,
   th:/[฀-๿]/, en:/[A-Za-z]/, vi:/[A-Za-zÀ-ỹ]/};
+Object.assign(SCRIPT_RE, {fr:/[A-Za-zÀ-ÿ]/, de:/[A-Za-zÄÖÜäöüß]/, es:/[A-Za-zÁÉÍÑÓÚÜáéíñóúü]/, ru:/[\u0400-\u04FF]/,
+  id:/[A-Za-z]/, ms:/[A-Za-z]/, lo:/[\u0E80-\u0EFF]/, my:/[\u1000-\u109F]/, hi:/[\u0900-\u097F]/, ar:/[\u0600-\u06FF]/});
 const KMCH = /[ក-៿᧠-᧿]/;
 const NUM_RE = /^[(\[]?(\d{1,3}|[\u17E0-\u17E9]{1,3}|[lI|]\d?)[.)\]:,]?$/;
 function median(a){ if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); return s[s.length >> 1]; }
@@ -608,7 +622,10 @@ function findRegions(bin, w, h){
       if (m) { m.x0 = Math.min(m.x0, r.x0); m.y0 = Math.min(m.y0, r.y0); m.x1 = Math.max(m.x1, r.x1); m.y1 = Math.max(m.y1, r.y1); m.cnt += r.cnt; changed = true; }
       else out.push(r); }
     regs = out; }
-  return regs.filter(r => (r.y1 - r.y0) >= ch * 0.5 && (r.x1 - r.x0) >= 4);
+  const out = regs.filter(r => (r.y1 - r.y0) >= ch * 0.5 && (r.x1 - r.x0) >= 4);
+  const hs = comps.map(c => c.y1 - c.y0 + 1).sort((a, b) => a - b);
+  out.charH = hs.length ? hs[Math.floor(hs.length * 0.9)] : ch;   // ≈ height of one full letter
+  return out;
 }
 const inkRow = (bin, w, y, x0, x1) => { let c = 0; for (let x = x0; x <= x1; x++) c += bin[y*w + x]; return c; };
 const inkCol = (bin, w, x, y0, y1) => { let c = 0; for (let y = y0; y <= y1; y++) c += bin[y*w + x]; return c; };
@@ -812,7 +829,7 @@ async function gtx(text, sl, tl){
     if (typeof seg[0] === 'string') t += seg[0];
     else if (seg[3]) rm += seg[3];
   }
-  return {t: t.trim(), r: rm.trim()};
+  return {t: t.trim(), r: rm.trim(), src: (j && j[2]) || sl};
 }
 async function mymemory(text, sl, tl){
   const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sl.split('-')[0]}|${tl.split('-')[0]}`;
@@ -983,35 +1000,57 @@ $('#wlNone').onclick = () => { WL.forEach(o => o.on = false); renderWL(); };
 $('#txtClear').onclick = () => { $('#txtIn').value = ''; WL = []; lastTr = null; renderWL(); $('#trCard').hidden = true; lsSet('vl_text', ''); };
 $('#txtIn').value = lsGet('vl_text', '') || '';
 $('#txtIn').oninput = () => lsSet('vl_text', $('#txtIn').value);
+/* ---- language of the text ---- */
+$('#txtLang').innerHTML = `<option value="auto">🌐 ស្វ័យប្រវត្តិ (រកភាសាឲ្យ)</option>` + Object.entries(LANGS).map(([k, v]) => `<option value="${k}">${v.name}</option>`).join('');
+$('#txtLang').value = lsGet('vl_txtlang', S.lang1) || 'ko';
+$('#txtLang').onchange = () => lsSet('vl_txtlang', $('#txtLang').value);
+const langObj = code => { const k = Object.keys(LANGS).find(k => LANGS[k].g === code || k === code || code.startsWith(k + '-'));
+  return k ? LANGS[k] : {name: code, short: code, ocr: 'eng', tts: code, g: code}; };
+const langKey = code => Object.keys(LANGS).find(k => LANGS[k].g === code || k === code) || null;
+async function detectLang(text){
+  const sel = $('#txtLang').value; if (sel !== 'auto') return sel;
+  const hangul = (text.match(/[가-힣]/g) || []).length, letters = (text.match(/\p{L}/gu) || []).length;
+  if (letters && hangul / letters > 0.5) return 'ko';
+  try { const x = await gtx(text.slice(0, 300), 'auto', 'km'); return langKey(x.src) || x.src || 'en'; } catch { return 'en'; }
+}
+// when words/sentences go into an empty table, column 1 takes the language of the text
+function useTableLang(k){
+  if (!S.items.length && LANGS[k] && S.lang1 !== k) { S.lang1 = k; $('#lang1').value = k; $('#thA').textContent = L1().short; saveDraft(); updateVoiceInfo(); }
+}
+let txtSrc = 'ko';
 $('#btnSplit').onclick = async () => {
   const text = $('#txtIn').value.trim(); if (!text) return toast('សូមបិទភ្ជាប់អត្ថបទសិន');
   const btn = $('#btnSplit'); btn.disabled = true;
   let list, mode = '';
   try {
-    if (S.lang1 === 'ko') {
+    txtSrc = await detectLang(text);
+    if (txtSrc === 'ko') {
       try {
         if (!koTok) { $('#linProgWrap').hidden = false; setTxtStatus('📚 កំពុងទាញវចនានុក្រមកូរ៉េ (~22MB — តែលើកដំបូងប៉ុណ្ណោះ)…'); }
         await loadKoAnalyzer(p => { $('#linProg').style.width = Math.round(p * 100) + '%'; setTxtStatus(`📚 កំពុងទាញវចនានុក្រមកូរ៉េ… ${Math.round(p * 100)}% (តែលើកដំបូងប៉ុណ្ណោះ)`); });
-        list = baseWordsLindera(text); mode = 'វចនានុក្រម';
+        list = baseWordsLindera(text); mode = 'វចនានុក្រមកូរ៉េ';
       } catch (e) { console.warn(e); list = baseWordsSimple(text); mode = 'សាមញ្ញ (ទាញវចនានុក្រមមិនបាន — ពិនិត្យ Internet)'; }
-    } else { list = splitPlainWords(text); mode = 'ដកឃ្លា'; }
+    } else {
+      list = splitPlainWords(text).map(o => ({...o, w: /^[A-Za-zÀ-ÿ]/.test(o.w) && o.w !== o.w.toUpperCase() ? o.w.toLowerCase() : o.w}));
+      mode = (langObj(txtSrc).short || txtSrc) + ' — បំបែកតាមដកឃ្លា';
+    }
     $('#linProgWrap').hidden = true;
     WL = groupCount(list).map(o => ({...o, on: true, m: '', r: '', busy: true}));
     renderWL();
-    setTxtStatus(`✅ ឃើញ ${WL.length} ពាក្យដើម (របៀប: ${mode}) — កំពុងបកប្រែជាខ្មែរ…`);
+    setTxtStatus(`✅ ឃើញ ${WL.length} ពាក្យ (${mode}) — កំពុងបកប្រែជាខ្មែរ…`);
     $('#wlCard').scrollIntoView({behavior: 'smooth', block: 'start'});
-    let fail = 0;
+    let fail = 0; const sl = langObj(txtSrc).g;
     await pool(WL.map((o, i) => i), 3, async i => {
       const o = WL[i];
-      try { const x = await translateText(o.w, L1().g, KM.g); o.m = cleanTr(x.t); o.r = x.r || ''; } catch { fail++; }
+      try { const x = await translateText(o.w, sl, KM.g); o.m = cleanTr(x.t); o.r = x.r || ''; } catch { fail++; }
       o.busy = false; renderWL();
     });
-    setTxtStatus(`✅ ${WL.length} ពាក្យដើម (របៀប: ${mode})` + (fail ? ` — ⚠️ ${fail} ពាក្យបកប្រែមិនបាន` : '') + '។ ដោះធីកពាក្យដែលមិនចង់បាន ហើយចុច ➕ ដាក់ចូលតារាង។');
+    setTxtStatus(`✅ ${WL.length} ពាក្យ (${mode})` + (fail ? ` — ⚠️ ${fail} ពាក្យបកប្រែមិនបាន` : '') + '។ ដោះធីកពាក្យដែលមិនចង់បាន ហើយចុច ➕ ដាក់ចូលតារាង។');
   } finally { btn.disabled = false; $('#linProgWrap').hidden = true; }
 };
 $('#addWords').onclick = () => {
   const sel = WL.filter(o => o.on); if (!sel.length) return toast('មិនបានជ្រើសពាក្យ');
-  askFresh();
+  askFresh(); useTableLang(txtSrc);
   S.items.push(...sel.map(o => { const it = {a: o.w, b: o.m || ''}; if (o.r) it.r = o.r; return it; }));
   listChanged(); toast(`➕ បានដាក់ ${sel.length} ពាក្យចូលតារាង`); showTab('table');
   if (S.settings.autoTr && sel.some(o => !o.m)) translateRows(false);
@@ -1032,12 +1071,13 @@ $('#btnTrAll').onclick = async () => {
   const text = $('#txtIn').value.trim(); if (!text) return toast('សូមបិទភ្ជាប់អត្ថបទសិន');
   const btn = $('#btnTrAll'); btn.disabled = true; setTxtStatus('🌐 កំពុងបកប្រែអត្ថបទ…');
   try {
-    const km = await translateLong(text, L1().g, KM.g);
-    lastTr = {ko: text, km};
+    txtSrc = await detectLang(text);
+    const km = await translateLong(text, langObj(txtSrc).g, KM.g);
+    lastTr = {ko: text, km, src: txtSrc};
     const ko = text.split('\n'), kmL = km.split('\n');
     $('#trOut').innerHTML = ko.map((l, i) => l.trim() ? `<div class="ko">${esc(l)}</div><div class="km">${esc(kmL[i] || '')}</div>` : '').join('');
     $('#trCard').hidden = false; $('#trCard').scrollIntoView({behavior: 'smooth', block: 'start'});
-    setTxtStatus('✅ បកប្រែរួចរាល់');
+    setTxtStatus(`✅ បកប្រែរួចរាល់ (${esc(langObj(txtSrc).name)} → ខ្មែរ)`);
   } catch (e) { console.warn(e); setTxtStatus('❌ បកប្រែមិនបាន — ពិនិត្យ Internet'); }
   finally { btn.disabled = false; }
 };
@@ -1045,31 +1085,124 @@ async function sayLong(text, L){
   pause(); const my = P.token;
   for (const s of splitSentences(text)) { if (my !== P.token) return; await speak(s.slice(0, 190), L, S.settings.rate); await sleep(300); }
 }
-$('#sayKo').onclick = () => lastTr && sayLong(lastTr.ko, L1());
+$('#sayKo').onclick = () => lastTr && sayLong(lastTr.ko, langObj(lastTr.src || txtSrc));
 $('#sayKm').onclick = () => lastTr && sayLong(lastTr.km, KM);
 $('#copyTr').onclick = async () => { if (!lastTr) return; try { await navigator.clipboard.writeText(lastTr.km); toast('📋 បានចម្លងការបកប្រែ'); } catch { toast('ចម្លងមិនបាន'); } };
 $('#addSent').onclick = async () => {
   const text = $('#txtIn').value.trim(); if (!text) return;
   const sents = splitSentences(text); if (!sents.length) return;
   const btn = $('#addSent'); btn.disabled = true; setTxtStatus(`🌐 កំពុងបកប្រែ ${sents.length} ប្រយោគ…`);
+  txtSrc = await detectLang(text); const sl = langObj(txtSrc).g;
   const items = sents.map(s => ({a: s, b: ''}));
-  await pool(items.map((_, i) => i), 3, async i => { try { const x = await translateText(items[i].a, L1().g, KM.g); items[i].b = cleanTr(x.t); } catch {} });
+  await pool(items.map((_, i) => i), 3, async i => { try { const x = await translateText(items[i].a, sl, KM.g); items[i].b = cleanTr(x.t); } catch {} });
   btn.disabled = false;
-  askFresh(); S.items.push(...items); listChanged();
+  askFresh(); useTableLang(txtSrc); S.items.push(...items); listChanged();
   setTxtStatus(`✅ បានដាក់ ${items.length} ប្រយោគចូលតារាង`); toast(`➕ ${items.length} ប្រយោគ`); showTab('table');
 };
+
+/* ---- picture → text, read line by line (same cleaning as the word scanner) ---- */
+function layoutTextLines(ls, imgW){
+  if (!ls.length) return '';
+  ls.forEach(o => { o.h = o.y1 - o.y0 + 1; o.cx = (o.x0 + o.x1) / 2; });
+  // columns (side-by-side text blocks / pages)
+  const BINS = 200, cov = new Uint8Array(BINS);
+  ls.forEach(o => { const a = Math.floor(o.x0 / imgW * BINS), b = Math.min(BINS - 1, Math.floor(o.x1 / imgW * BINS)); for (let i = a; i <= b; i++) cov[i] = 1; });
+  const cols = []; let st = -1, gap = 0, lastOn = -1;
+  for (let i = 0; i < BINS; i++) { if (cov[i]) { if (st < 0) st = i; else if (gap >= 3) { cols.push([st, lastOn]); st = i; } gap = 0; lastOn = i; } else if (st >= 0) gap++; }
+  if (st >= 0) cols.push([st, lastOn]);
+  const colOf = o => { const b = Math.floor(o.cx / imgW * BINS); const i = cols.findIndex(c => b >= c[0] && b <= c[1]); return i < 0 ? 0 : i; };
+  const mh = median(ls.map(o => o.h)), paras = [];
+  cols.forEach((c, ci) => {
+    const L = ls.filter(o => colOf(o) === ci).sort((a, b) => a.y0 - b.y0 || a.x0 - b.x0);
+    // merge pieces that sit on the same line
+    const rows = [];
+    for (const o of L) { const r = rows.find(r => Math.abs((r.y0 + r.y1) / 2 - (o.y0 + o.y1) / 2) < 0.5 * Math.max(r.h, o.h));
+      if (r) { r.parts.push(o); r.x0 = Math.min(r.x0, o.x0); r.x1 = Math.max(r.x1, o.x1); r.y1 = Math.max(r.y1, o.y1); }
+      else rows.push({parts: [o], x0: o.x0, x1: o.x1, y0: o.y0, y1: o.y1, h: o.h}); }
+    rows.forEach(r => r.t = r.parts.sort((a, b) => a.x0 - b.x0).map(o => o.t).join(' '));
+    const colW = Math.max(...rows.map(r => r.x1 - r.x0));
+    // a paragraph starts where the gap is clearly bigger than the normal line spacing
+    const gaps = rows.slice(1).map((r, i) => r.y0 - rows[i].y1), mg = median(gaps);
+    const paraGap = rows.length >= 3 ? Math.max(mg * 1.5, mh * 0.35) : mh * 0.9;
+    let cur = '';
+    rows.forEach((r, i) => {
+      const prev = rows[i - 1];
+      if (prev && r.y0 - prev.y1 > paraGap) { if (cur) paras.push(cur); cur = ''; }
+      if (!cur) cur = r.t;
+      else {
+        const endSent = /[.?!。！？:]["”’)]?$/.test(prev.t), shortPrev = (prev.x1 - prev.x0) < colW * 0.7;
+        // Korean wrapped in the middle of a word: a lone particle at the start of the next line belongs to the last word
+        const glue = /[\uAC00-\uD7A3]$/.test(prev.t) && /^[이가은는을를에의도와과로만](\s|$)/.test(r.t);
+        cur += (endSent || shortPrev) ? '\n' + r.t : (glue ? '' : ' ') + r.t;
+      }
+    });
+    if (cur) paras.push(cur);
+  });
+  return paras.join('\n\n');
+}
+async function smartTextScan(w8, url, okRe, onProg){
+  const img = await loadImg(url); const w0 = img.naturalWidth, h0 = img.naturalHeight, mx = Math.max(w0, h0);
+  const sc = Math.min(3000 / mx, Math.max(1, 2400 / mx));
+  const w = Math.round(w0 * sc), h = Math.round(h0 * sc);
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const ctx = c.getContext('2d', {willReadFrequently: true}); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); ctx.drawImage(img, 0, 0, w, h);
+  const px = ctx.getImageData(0, 0, w, h).data;
+  const run = async colorOK => {
+    const bin = binarize(toInk(px, w, h, colorOK), w, h);
+    const regs = findRegions(bin, w, h), cH = regs.charH;
+    const lines = [];
+    for (const r of regs) {
+      if ((r.x1 - r.x0) * (r.y1 - r.y0) > w * h * 0.4) continue;
+      for (const L of splitLines(bin, w, r, cH)) { const lh = L.y1 - L.y0 + 1;
+        if (lh < cH * 0.5 || lh > cH * 3 || L.x1 - L.x0 < cH * 0.6) continue; lines.push(L); }
+    }
+    const bc = document.createElement('canvas'); bc.width = w; bc.height = h;
+    const bctx = bc.getContext('2d'), id = bctx.createImageData(w, h);
+    for (let i = 0, j = 0; i < w * h; i++, j += 4) { const v = bin[i] ? 0 : 255; id.data[j] = id.data[j+1] = id.data[j+2] = v; id.data[j+3] = 255; }
+    bctx.putImageData(id, 0, 0);
+    await w8.setParameters({tessedit_pageseg_mode: '7', user_defined_dpi: '300'});
+    const res = []; let done = 0;
+    for (const L of lines) {
+      const H = L.y1 - L.y0 + 1, pad = Math.round(H * 0.25);
+      const x0 = Math.max(0, L.x0 - pad), y0 = Math.max(0, L.y0 - pad), x1 = Math.min(w - 1, L.x1 + pad), y1 = Math.min(h - 1, L.y1 + pad);
+      const rw = x1 - x0 + 1, rh = y1 - y0 + 1, s = Math.max(0.3, Math.min(4, 52 / H));
+      const cc = document.createElement('canvas'); cc.width = Math.max(8, Math.round(rw * s)); cc.height = Math.max(8, Math.round(rh * s));
+      const g = cc.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, cc.width, cc.height); g.drawImage(bc, x0, y0, rw, rh, 0, 0, cc.width, cc.height);
+      const {data} = await w8.recognize(cc);
+      let t = (data.text || '').replace(/\s+/g, ' ').trim();
+      // a lone "|" in Latin text is the word "I"; elsewhere it is a stray line
+      t = /[A-Za-z]/.test(t) ? t.replace(/(^|\s)[|¦](?=\s|$)/g, '$1I') : t;
+      t = t.replace(/[|_¦]+/g, ' ').replace(/\s+/g, ' ').trim();
+      // mostly-Korean line: drop stray Latin bits the English model invented
+      const hg = (t.match(/[\uAC00-\uD7A3]/g) || []).length, lt = (t.match(/[A-Za-z]/g) || []).length;
+      if (hg && hg > lt * 2) t = t.split(' ').filter(x => !/^[A-Za-z0-9.,:;'"!?]+$/.test(x) || /^[0-9.,]+$/.test(x)).join(' ');
+      res.push({...L, t, c: data.confidence || 0});
+      onProg(++done / Math.max(1, lines.length));
+    }
+    return res.filter(o => o.t && okRe.test(o.t) && o.c >= 45);
+  };
+  let ls = await run($('#tColor').checked);
+  if (ls.length < 2 && !$('#tColor').checked) { const more = await run(true); if (more.length > ls.length) ls = more; }
+  return layoutTextLines(ls, w);
+}
 $('#txtFromImg').onclick = () => $('#fTxtImg').click();
 $('#fTxtImg').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-  const url = URL.createObjectURL(f); setTxtStatus('📷 កំពុងអានអក្សរពីរូប…'); $('#txtFromImg').disabled = true;
+  const url = URL.createObjectURL(f); $('#txtFromImg').disabled = true;
+  $('#linProgWrap').hidden = false; $('#linProg').style.width = '0';
   try {
-    await loadTess(); const w = await getWorker(L1().ocr + '+khm');
-    const lines = await classicScan(w, url);
-    const t = lines.map(l => l.trim()).filter(Boolean).join('\n');
-    $('#txtIn').value = ($('#txtIn').value.trim() ? $('#txtIn').value.trim() + '\n' : '') + t; lsSet('vl_text', $('#txtIn').value);
+    const sel = $('#txtLang').value, k = sel === 'auto' ? S.lang1 : sel;
+    const ocrLangs = sel === 'auto' ? [...new Set([LANGS[k].ocr, 'eng'])].join('+') : LANGS[k].ocr;
+    const okRe = sel === 'auto' ? /\p{L}/u : (SCRIPT_RE[k] || /\p{L}/u);
+    setTxtStatus('📷 កំពុងផ្ទុកម៉ាស៊ីនស្កែន…');
+    await loadTess(); const w = await getWorker(ocrLangs);
+    smartMode = true;
+    const t = await smartTextScan(w, url, okRe, p => { $('#linProg').style.width = Math.round(p * 100) + '%'; setTxtStatus(`📷 កំពុងអានអក្សរម្តងមួយបន្ទាត់… ${Math.round(p * 100)}%`); });
+    if (!t.trim()) { setTxtStatus('⚠️ រកមិនឃើញអក្សរ — ថតរូបឲ្យត្រង់ ភ្លឺ ច្បាស់ ឬជ្រើសភាសាឲ្យត្រូវ'); return; }
+    $('#txtIn').value = ($('#txtIn').value.trim() ? $('#txtIn').value.trim() + '\n\n' : '') + t; lsSet('vl_text', $('#txtIn').value);
     setTxtStatus('✅ បានយកអត្ថបទពីរូប — ពិនិត្យ/កែ ហើយចុច 🔍 ញែកពាក្យ ឬ 🌐 បកប្រែ');
-  } catch (err) { console.warn(err); setTxtStatus('❌ អានរូបមិនបាន'); }
-  finally { URL.revokeObjectURL(url); $('#txtFromImg').disabled = false; }
+  } catch (err) { console.warn(err); setTxtStatus('❌ អានរូបមិនបាន — ពិនិត្យ Internet ហើយសាកម្តងទៀត'); }
+  finally { smartMode = false; URL.revokeObjectURL(url); $('#txtFromImg').disabled = false; $('#linProgWrap').hidden = true; }
 };
 
 /* ================= table ================= */
